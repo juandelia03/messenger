@@ -21,17 +21,6 @@
           <Preview />
           <Preview />
           <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
-          <Preview />
         </div>
       </div>
       <div class="chat-room">
@@ -60,7 +49,10 @@
             v-if="hide == false"
           />
         </div>
-        <div class="messages"></div>
+        <div class="messages">
+          <Message :me="false" />
+          <Message :me="true" />
+        </div>
         <div class="send">
           <input type="text" class="inp" placeholder="Write your message here" />
         </div>
@@ -72,9 +64,10 @@
 <script>
 // @ is an alias to /src
 import Preview from "../components/preview.vue";
+import Message from "../components/message.vue";
 export default {
   name: "Main",
-  components: { Preview },
+  components: { Preview, Message },
   data() {
     return {
       searching: false,
@@ -197,6 +190,7 @@ export default {
   flex: 1;
   background: #e5ddd5;
   overflow-y: auto;
+  padding: 50px;
 }
 .send {
   display: flex;

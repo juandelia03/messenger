@@ -18,6 +18,12 @@
 <script>
 export default {
   name: "preview",
+  data() {
+    return {
+      back: {},
+    };
+  },
+  methods: {},
 };
 </script>
 
@@ -70,5 +76,8 @@ export default {
 }
 .preview:hover {
   background: #f5f5f5;
+}
+.preview-selected {
+  background: #ebebeb;
 }
 </style>
