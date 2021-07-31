@@ -1,7 +1,7 @@
 <template>
   <div class="preview">
     <img
-      src="https://www.hola.com/imagenes/estar-bien/20201005176621/perro-husky-raza-perro-lobo/0-874-229/husky-m.jpg"
+      src="https://i0.wp.com/securities-services.societegenerale.com/uploads/tx_bisgbio/default-profile.png"
       alt=""
       class="chat-img"
     />

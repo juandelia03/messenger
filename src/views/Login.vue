@@ -3,9 +3,10 @@
     <div class="login">
       <h1 class="title">Login</h1>
       <div class="form">
-        <input class="txt" type="text" />
-        <input class="txt" type="password" />
-        <button>Login</button>
+        <input class="txt" type="text" placeholder="username" v-model="user" />
+        <input class="txt" type="text" placeholder="email" v-model="email" />
+        <input class="txt" type="password" placeholder="password" v-model="password" />
+        <button @click="login">Login</button>
         <router-link to="/register" class="link">Register</router-link>
       </div>
     </div>
@@ -13,9 +14,49 @@
 </template>
 
 <script>
+import { inject, ref } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import firebase from "firebase/app";
+import auth from "firebase/auth";
+import firestore from "firebase/firestore";
+import router from "vue-router";
 export default {
   name: "Login",
   components: {},
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    const user = ref("");
+    const email = ref("");
+    const password = ref("");
+    const store = inject("store");
+    let emailComp = "";
+    const login = () => {
+      const db = firebase.firestore();
+      const ref = db.collection("users").doc(user.value);
+      ref
+        .get()
+        .then((doc) => {
+          emailComp = doc.data().email;
+        })
+        .then(() => {
+          if (emailComp == email.value) {
+            firebase
+              .auth()
+              .signInWithEmailAndPassword(email.value, password.value)
+              .then(() => {
+                store.state.logged = true;
+                store.state.currentUser = user.value;
+                router.push("/");
+              });
+          }
+        });
+    };
+    return { store, email, password, login, user };
+  },
+  data() {
+    return {};
+  },
 };
 </script>
 

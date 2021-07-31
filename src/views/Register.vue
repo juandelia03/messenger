@@ -3,9 +3,10 @@
     <div class="login">
       <h1 class="title">Register</h1>
       <div class="form">
-        <input class="txt" type="text" />
-        <input class="txt" type="password" />
-        <button>Register</button>
+        <input class="txt" type="text" placeholder="username" v-model="username" />
+        <input class="txt" type="text" placeholder="email" v-model="email" />
+        <input class="txt" type="password" placeholder="password" v-model="password" />
+        <button @click="register">Register</button>
         <router-link to="/login" class="link">Login</router-link>
       </div>
     </div>
@@ -13,9 +14,67 @@
 </template>
 
 <script>
+import firebase from "firebase/app";
+import auth from "firebase/auth";
+import firestore from "firebase/firestore";
+import router from "vue-router";
+import { inject } from "vue";
 export default {
   name: "Login",
   components: {},
+  setup() {
+    const store = inject("store");
+    return { store };
+  },
+  data() {
+    return {
+      email: "",
+      username: "",
+      password: "",
+    };
+  },
+  mounted() {
+    this.$emit("test");
+  },
+  methods: {
+    async register() {
+      let everyUser = [];
+      const db = firebase.firestore();
+      const userObject = {
+        user: this.username,
+        email: this.email,
+        profilePic:
+          "https://kb.rspca.org.au/wp-content/uploads/2018/11/golder-retriever-puppy.jpeg",
+      };
+      const usersRef = db.collection("users");
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(this.email, this.password)
+        .then((userCredential) => {
+          usersRef
+            .get()
+            .then((query) => {
+              query.forEach((doc) => {
+                everyUser.push(doc.data().user);
+              });
+            })
+            .then(() => {
+              if (everyUser.indexOf(this.username) == -1) {
+                db.collection("users").doc(this.username).set(userObject);
+                this.store.state.logged = true;
+                this.store.state.currentUser = this.username;
+                this.$router.push("/");
+              } else {
+                console.log("username already taken or missing data");
+              }
+            });
+        })
+        .catch((error) => {
+          var errorCode = error.code;
+          var errorMessage = error.message;
+        });
+    },
+  },
 };
 </script>
 

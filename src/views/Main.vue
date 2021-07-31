@@ -18,9 +18,7 @@
           />
         </div>
         <div class="chat">
-          <Preview />
-          <Preview />
-          <Preview />
+          <Preview v-for="user in users" :key="user.user" :name="user.user" />
         </div>
       </div>
       <div class="chat-room">
@@ -63,8 +61,12 @@
 
 <script>
 // @ is an alias to /src
+import firebase from "firebase/app";
+import auth from "firebase/auth";
+import firestore from "firebase/firestore";
 import Preview from "../components/preview.vue";
 import Message from "../components/message.vue";
+import { inject } from "vue";
 export default {
   name: "Main",
   components: { Preview, Message },
@@ -73,7 +75,12 @@ export default {
       searching: false,
       notS: true,
       hide: true,
+      users: [],
     };
+  },
+  setup() {
+    const store = inject("store");
+    return { store };
   },
   methods: {
     input() {
@@ -87,6 +94,18 @@ export default {
         this.hide = false;
       }
     },
+  },
+  beforeMount() {
+    const db = firebase.firestore();
+    const usersRef = db.collection("users");
+    if (this.store.state.logged == false) {
+      this.$router.push("login");
+    }
+    usersRef.get().then((query) => {
+      query.forEach((doc) => {
+        this.users.push(doc.data());
+      });
+    });
   },
 };
 </script>
