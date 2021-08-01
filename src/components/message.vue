@@ -1,7 +1,7 @@
 <template>
   <div :class="{ me: meClass }">
     <div :class="{ 'bubble-friend': himClass, 'bubble-me': meClass }">
-      <p class="main-txt">como va paaa</p>
+      <p class="main-txt">{{ msg }}</p>
     </div>
   </div>
 </template>
@@ -11,6 +11,7 @@ export default {
   name: "Message",
   props: {
     me: Boolean,
+    msg: String,
   },
   data() {
     return {

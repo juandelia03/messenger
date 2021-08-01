@@ -1,14 +1,10 @@
 <template>
   <div class="main">
-    <div class="container">
+    <div class="container" v-if="ready == true">
       <div class="side">
         <div class="section-1">
           <i class="fas fa-search"></i>
-          <img
-            src="https://leaderreaderjournal.com/wp-content/uploads/2021/01/dog.jpg"
-            alt=""
-            class="profile-pic"
-          />
+          <img :src="profilePic" alt="" class="profile-pic" />
         </div>
         <div class="input-cont">
           <input
@@ -18,17 +14,20 @@
           />
         </div>
         <div class="chat">
-          <Preview v-for="user in users" :key="user.user" :name="user.user" />
+          <Preview
+            v-for="user in users"
+            :key="user.user"
+            :name="user.user"
+            :img="user.profilePic"
+            :selectedUser="selectedUser"
+            @preview="select"
+          />
         </div>
       </div>
-      <div class="chat-room">
+      <div class="chat-room" v-if="selectedUser != ''">
         <div class="friend">
-          <img
-            src="https://kb.rspca.org.au/wp-content/uploads/2018/11/golder-retriever-puppy.jpeg"
-            alt=""
-            class="friends-pic"
-          />
-          <p class="name">User</p>
+          <img :src="friendsPic" alt="" class="friends-pic" />
+          <p class="name">{{ selectedUser }}</p>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -48,12 +47,31 @@
           />
         </div>
         <div class="messages">
-          <Message :me="false" />
-          <Message :me="true" />
+          <Message
+            v-for="message in messages"
+            :key="message.id"
+            :me="message.me"
+            :msg="message.msg"
+          />
         </div>
         <div class="send">
-          <input type="text" class="inp" placeholder="Write your message here" />
+          <input
+            type="text"
+            class="inp"
+            placeholder="Write your message here"
+            v-model="msg"
+            @keypress.enter="newMsg"
+          />
         </div>
+      </div>
+      <div v-else class="empty"></div>
+    </div>
+    <div v-else>
+      <div class="lds-ring">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
       </div>
     </div>
   </div>
@@ -76,6 +94,12 @@ export default {
       notS: true,
       hide: true,
       users: [],
+      profilePic: "",
+      selectedUser: "",
+      friendsPic: "",
+      msg: "",
+      ready: false,
+      messages: [],
     };
   },
   setup() {
@@ -94,8 +118,88 @@ export default {
         this.hide = false;
       }
     },
+    async select(e) {
+      if (this.selectedUser != e) {
+        this.messages = [];
+        let mymsgs = [];
+        let hismsgs = [];
+        const db = firebase.firestore();
+        const usersRef = db.collection("users").doc(e);
+        usersRef
+          .get()
+          .then((doc) => {
+            this.selectedUser = e;
+            this.friendsPic = doc.data().profilePic;
+          })
+          .then(() => {
+            const myMsgref = db
+              .collection("users")
+              .doc(this.store.state.currentUser)
+              .collection("sentTo")
+              .doc(this.selectedUser);
+            myMsgref.get().then((doc) => {
+              mymsgs = doc.data().msgs.map((e) => {
+                mymsgs.push({ ...e, me: true });
+                this.messages.push({ ...e, me: true });
+              });
+            });
+          })
+          .then(() => {
+            const hisMsgref = db
+              .collection("users")
+              .doc(this.selectedUser)
+              .collection("sentTo")
+              .doc(this.store.state.currentUser);
+            hisMsgref.get().then((doc) => {
+              hismsgs = doc.data().msgs.map((e) => {
+                hismsgs.push({ ...e, me: false });
+                this.messages.push({ ...e, me: false });
+              });
+
+              this.messages.sort((a, b) => {
+                return a.id - b.id;
+              });
+            });
+          });
+      }
+    },
+    async newMsg() {
+      if (this.msg != "") {
+        const msg = this.msg;
+        this.msg = "";
+        const today = new Date();
+        const id = today.valueOf();
+        const time = String(today.getHours()) + ":" + today.getMinutes();
+        const db = firebase.firestore();
+        const ref = db
+          .collection("users")
+          .doc(this.store.state.currentUser)
+          .collection("sentTo")
+          .doc(this.selectedUser);
+        ref.get().then((doc) => {
+          if (doc.data() == undefined) {
+            ref
+              .set({
+                msgs: firebase.firestore.FieldValue.arrayUnion({ msg: msg, time: time, id: id }),
+              })
+              .then(() => {
+                this.msg = "";
+              });
+          } else {
+            ref
+              .update({
+                msgs: firebase.firestore.FieldValue.arrayUnion({ msg: msg, time: time, id: id }),
+              })
+              .then(() => {
+                this.msg = "";
+              });
+          }
+        });
+      }
+    },
   },
   beforeMount() {
+    console.log(this.store.state.currentUser);
     const db = firebase.firestore();
     const usersRef = db.collection("users");
     if (this.store.state.logged == false) {
@@ -103,7 +207,12 @@ export default {
     }
     usersRef.get().then((query) => {
       query.forEach((doc) => {
-        this.users.push(doc.data());
+        if (doc.data().user != this.store.state.currentUser) {
+          this.users.push(doc.data());
+        } else {
+          this.profilePic = doc.data().profilePic;
+          this.ready = true;
+        }
       });
     });
   },
@@ -256,6 +365,10 @@ export default {
   padding: 0px 12px;
   border: lightgray 1px solid;
 }
+.empty {
+  background: #e5ddd5;
+  flex: 1;
+}
 @keyframes magic {
   from {
     width: 0%;
@@ -275,6 +388,41 @@ export default {
     width: 0px;
     display: none;
     visibility: none;
+  }
+}
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #fff;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #fff transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

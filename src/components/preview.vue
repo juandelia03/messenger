@@ -1,12 +1,8 @@
 <template>
-  <div class="preview">
-    <img
-      src="https://i0.wp.com/securities-services.societegenerale.com/uploads/tx_bisgbio/default-profile.png"
-      alt=""
-      class="chat-img"
-    />
+  <div :class="{ selected: selec, preview: notselec }" @click="$emit('preview', name)">
+    <img :src="img" alt="" class="chat-img" />
     <div class="last-msg">
-      <p class="name">PUNTO FC</p>
+      <p class="name">{{ name }}</p>
       <p class="msg">Nachito: Mañana jugamos</p>
     </div>
     <div class="time-div">
@@ -18,12 +14,30 @@
 <script>
 export default {
   name: "preview",
+  props: {
+    name: String,
+    img: String,
+    selectedUser: String,
+  },
   data() {
     return {
       back: {},
+      selec: false,
+      notselec: true,
     };
   },
   methods: {},
+  watch: {
+    selectedUser: function (newval, old) {
+      if (newval == this.name) {
+        this.notselec = false;
+        this.selec = newval == this.selectedUser;
+      } else {
+        this.selec = false;
+        this.notselec = true;
+      }
+    },
+  },
 };
 </script>
 
@@ -41,6 +55,21 @@ export default {
   user-select: none;
   cursor: pointer;
 }
+.selected {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  border-bottom: solid;
+  border-color: lightgray;
+  border-width: 1px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  background: #ebebeb;
+}
+
 .chat-img {
   width: 49px;
   height: 49px;
