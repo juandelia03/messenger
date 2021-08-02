@@ -3,6 +3,7 @@
     <div class="login">
       <h1 class="title">Register</h1>
       <div class="form">
+        <p class="err" v-if="errorShow == true">{{ error }}</p>
         <input class="txt" type="text" placeholder="username" v-model="username" />
         <input class="txt" type="text" placeholder="email" v-model="email" />
         <input class="txt" type="password" placeholder="password" v-model="password" />
@@ -31,6 +32,8 @@ export default {
       email: "",
       username: "",
       password: "",
+      error: "",
+      errorShow: false,
     };
   },
   mounted() {
@@ -47,33 +50,72 @@ export default {
           "https://kb.rspca.org.au/wp-content/uploads/2018/11/golder-retriever-puppy.jpeg",
       };
       const usersRef = db.collection("users");
-      firebase
-        .auth()
-        .createUserWithEmailAndPassword(this.email, this.password)
-        .then((userCredential) => {
-          usersRef
-            .get()
-            .then((query) => {
-              query.forEach((doc) => {
-                everyUser.push(doc.data().user);
-              });
-            })
-            .then(() => {
-              if (everyUser.indexOf(this.username) == -1) {
+
+      usersRef
+        .get()
+        .then((query) => {
+          query.forEach((doc) => {
+            everyUser.push(doc.data().user);
+          });
+        })
+        .then(() => {
+          if (everyUser.indexOf(this.username) == -1 && this.username != "") {
+            firebase
+              .auth()
+              .createUserWithEmailAndPassword(this.email, this.password)
+              .then(() => {
                 db.collection("users").doc(this.username).set(userObject);
                 this.store.state.logged = true;
                 this.store.state.currentUser = this.username;
                 this.$router.push("/");
-              } else {
-                console.log("username already taken or missing data");
-              }
-            });
-        })
-        .catch((error) => {
-          var errorCode = error.code;
-          var errorMessage = error.message;
+              })
+              .catch((err) => {
+                this.error = err.message;
+                this.errorShow = true;
+              });
+          } else {
+            this.error = "Username already taken ";
+            this.errorShow = true;
+          }
         });
     },
+    // async register() {
+    //   let everyUser = [];
+    //   const db = firebase.firestore();
+    //   const userObject = {
+    //     user: this.username,
+    //     email: this.email,
+    //     profilePic:
+    //       "https://kb.rspca.org.au/wp-content/uploads/2018/11/golder-retriever-puppy.jpeg",
+    //   };
+    //   const usersRef = db.collection("users");
+    //   firebase
+    //     .auth()
+    //     .createUserWithEmailAndPassword(this.email, this.password)
+    //     .then((userCredential) => {
+    //       usersRef
+    //         .get()
+    //         .then((query) => {
+    //           query.forEach((doc) => {
+    //             everyUser.push(doc.data().user);
+    //           });
+    //         })
+    //         .then(() => {
+    //           if (everyUser.indexOf(this.username) == -1) {
+    //             db.collection("users").doc(this.username).set(userObject);
+    //             this.store.state.logged = true;
+    //             this.store.state.currentUser = this.username;
+    //             this.$router.push("/");
+    //           } else {
+    //             this.error = "username already taken or missing data";
+    //           }
+    //         });
+    //     })
+    //     .catch((error) => {
+    //       var errorCode = error.code;
+    //       this.error = error.message;
+    //     });
+    // },
   },
 };
 </script>
@@ -125,5 +167,19 @@ button {
 .link {
   padding-top: 20px;
   margin: auto;
+}
+.err {
+  opacity: 1;
+  margin: auto;
+  color: red;
+  animation: fade 0.5s linear;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>

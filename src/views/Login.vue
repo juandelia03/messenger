@@ -3,6 +3,7 @@
     <div class="login">
       <h1 class="title">Login</h1>
       <div class="form">
+        <p class="error" v-if="errorShow == true">{{ error }}</p>
         <input class="txt" type="text" placeholder="username" v-model="user" />
         <input class="txt" type="text" placeholder="email" v-model="email" />
         <input class="txt" type="password" placeholder="password" v-model="password" />
@@ -24,6 +25,8 @@ export default {
   name: "Login",
   components: {},
   setup() {
+    let errorShow = ref(false);
+    let error = ref("");
     const router = useRouter();
     const route = useRoute();
     const user = ref("");
@@ -48,11 +51,18 @@ export default {
                 store.state.logged = true;
                 store.state.currentUser = user.value;
                 router.push("/");
+              })
+              .catch((e) => {
+                error.value = e.message;
+                errorShow.value = true;
               });
+          } else {
+            error.value = "incorrect information";
+            errorShow.value = true;
           }
         });
     };
-    return { store, email, password, login, user };
+    return { store, email, password, login, user, error, errorShow };
   },
   data() {
     return {};
@@ -85,7 +95,7 @@ export default {
   margin-top: 50px;
 }
 .txt {
-  margin-top: 20px;
+  margin: 10px auto;
   padding: 0px 10px;
   outline: none;
   border: none;
@@ -93,6 +103,19 @@ export default {
   height: 50px;
   border-radius: 5px;
   font-size: 18px;
+}
+.error {
+  color: red;
+  margin: auto;
+  animation: fade 0.5s linear;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 button {
   font-size: 18px;
