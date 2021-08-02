@@ -3,8 +3,14 @@
     <div class="container" v-if="ready == true">
       <div class="side">
         <div class="section-1">
-          <i class="fas fa-search"></i>
           <img :src="profilePic" alt="" class="profile-pic" />
+          <input
+            type="text"
+            class="change-pic"
+            placeholder="Paste the Url of your new Profile Picture"
+            @keypress.enter="changePic"
+            v-model="url"
+          />
         </div>
         <div class="input-cont">
           <input
@@ -60,6 +66,7 @@
               :msg="message.msg"
               :time="message.time"
               :highlight="message.selected"
+              @scrolled="scrollEnd"
             />
           </div>
         </div>
@@ -113,6 +120,9 @@ export default {
       okay: false,
       oldM: "",
       user: "",
+      changing: false,
+      notChanging: true,
+      url: "",
     };
   },
   setup() {
@@ -271,6 +281,22 @@ export default {
         });
         console.log(this.users);
       }
+    },
+    changePic() {
+      if (!!this.url.match(/\w+\.(jpg|jpeg|gif|png|tiff|bmp)$/gi) == true) {
+        this.profilePic = this.url;
+        firebase.firestore().collection("users").doc("juan").update({
+          profilePic: this.url,
+        });
+        this.url = "";
+      }
+    },
+    scrollEnd() {
+      setTimeout(() => {
+        let container = document.querySelector(".messages");
+        let scrollHeight = container.scrollHeight;
+        container.scrollTop = container.scrollHeight;
+      }, 100);
     },
   },
   beforeMount() {
@@ -443,6 +469,19 @@ export default {
   background: #e5ddd5;
   flex: 1;
 }
+.change-pic {
+  margin-left: 50px;
+  width: 240px;
+  animation: magic;
+  animation-duration: 0.7s;
+  outline: none;
+  border: none;
+  border-radius: 20px;
+  height: 30px;
+  padding: 0px 12px;
+  border: lightgray 1px solid;
+}
+
 @keyframes magic {
   from {
     width: 0%;

@@ -29,6 +29,9 @@ export default {
       this.meClass = true;
     }
   },
+  created() {
+    this.$emit("scrolled");
+  },
 };
 </script>
 
