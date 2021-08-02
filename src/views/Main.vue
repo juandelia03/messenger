@@ -11,6 +11,8 @@
             type="text"
             class="chat-search"
             placeholder="Search for a chat or start a new one"
+            @keypress.enter="searchUser"
+            v-model="user"
           />
         </div>
         <div class="chat">
@@ -20,6 +22,7 @@
             :name="user.user"
             :img="user.profilePic"
             :selectedUser="selectedUser"
+            :show="user.found"
             @preview="select"
           />
         </div>
@@ -44,6 +47,8 @@
             type="text"
             :class="{ 'magic-input': searching, 'magic-input2': notS }"
             v-if="hide == false"
+            v-model="oldM"
+            @keypress.enter="searchOld"
           />
         </div>
         <div class="messages">
@@ -53,6 +58,8 @@
               :key="message.id"
               :me="message.me"
               :msg="message.msg"
+              :time="message.time"
+              :highlight="message.selected"
             />
           </div>
         </div>
@@ -87,6 +94,7 @@ import firestore from "firebase/firestore";
 import Preview from "../components/preview.vue";
 import Message from "../components/message.vue";
 import { inject } from "vue";
+import Fuse from "fuse.js";
 export default {
   name: "Main",
   components: { Preview, Message },
@@ -103,6 +111,8 @@ export default {
       ready: false,
       messages: [],
       okay: false,
+      oldM: "",
+      user: "",
     };
   },
   setup() {
@@ -224,6 +234,42 @@ export default {
               });
           }
         });
+      }
+    },
+    searchOld() {
+      this.messages.forEach((e) => {
+        e.selected = {};
+      });
+      const options = {
+        keys: ["msg"],
+      };
+      const fuse = new Fuse(this.messages, options);
+      const result = fuse.search(this.oldM);
+      let newArr = [];
+      result.forEach((e) => {
+        const i = this.messages.indexOf(e.item);
+        this.messages[i] = { ...e.item, selected: { background: "yellow" } };
+      });
+    },
+    searchUser() {
+      if (this.user == "") {
+        this.users.forEach((e) => {
+          e.found = true;
+        });
+      } else {
+        this.users.forEach((e) => {
+          e.found = false;
+        });
+        const options = {
+          keys: ["user"],
+        };
+        const fuse = new Fuse(this.users, options);
+        const result = fuse.search(this.user);
+        result.forEach((e) => {
+          const i = this.users.indexOf(e.item);
+          this.users[i] = { ...e.item, found: true };
+        });
+        console.log(this.users);
       }
     },
   },

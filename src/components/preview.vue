@@ -1,13 +1,14 @@
 <template>
-  <div :class="{ selected: selec, preview: notselec }" @click="$emit('preview', name)">
+  <div
+    :class="{ selected: selec, preview: notselec }"
+    @click="$emit('preview', name)"
+    v-if="show == true || show == undefined"
+  >
     <img :src="img" alt="" class="chat-img" />
     <div class="last-msg">
       <p class="name">{{ name }}</p>
-      <p class="msg">Nachito: Mañana jugamos</p>
     </div>
-    <div class="time-div">
-      <p class="time">1:38 pm.</p>
-    </div>
+    <div class="time-div"></div>
   </div>
 </template>
 
@@ -18,6 +19,7 @@ export default {
     name: String,
     img: String,
     selectedUser: String,
+    show: Boolean,
   },
   data() {
     return {
