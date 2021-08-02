@@ -47,12 +47,14 @@
           />
         </div>
         <div class="messages">
-          <Message
-            v-for="message in messages"
-            :key="message.id"
-            :me="message.me"
-            :msg="message.msg"
-          />
+          <div v-if="okay == true">
+            <Message
+              v-for="message in messages"
+              :key="message.id"
+              :me="message.me"
+              :msg="message.msg"
+            />
+          </div>
         </div>
         <div class="send">
           <input
@@ -100,11 +102,23 @@ export default {
       msg: "",
       ready: false,
       messages: [],
+      okay: false,
     };
   },
   setup() {
     const store = inject("store");
     return { store };
+  },
+  watch: {
+    selectedUser: function (NEW, OLD) {
+      this.okay = false;
+      setTimeout(() => {
+        this.messages.sort((a, b) => {
+          return a.id - b.id;
+        });
+        this.okay = true;
+      }, 1000);
+    },
   },
   methods: {
     input() {
@@ -121,8 +135,9 @@ export default {
     async select(e) {
       if (this.selectedUser != e) {
         this.messages = [];
-        let mymsgs = [];
-        let hismsgs = [];
+        let msgs = [];
+        let hism = [];
+        let mym = [];
         const db = firebase.firestore();
         const usersRef = db.collection("users").doc(e);
         usersRef
@@ -137,10 +152,18 @@ export default {
               .doc(this.store.state.currentUser)
               .collection("sentTo")
               .doc(this.selectedUser);
-            myMsgref.get().then((doc) => {
-              mymsgs = doc.data().msgs.map((e) => {
-                mymsgs.push({ ...e, me: true });
-                this.messages.push({ ...e, me: true });
+            myMsgref.onSnapshot((doc) => {
+              this.messages = [];
+              mym = [];
+              doc.data().msgs.map((e) => {
+                // msgs.push({ ...e, me: true });
+                // this.messages = msgs;
+                mym.push({ ...e, me: true });
+                this.messages = mym.concat(hism);
+                this.messages.sort((a, b) => {
+                  return a.id - b.id;
+                });
+                // this.messages.push({ ...e, me: true });
               });
             });
           })
@@ -150,21 +173,27 @@ export default {
               .doc(this.selectedUser)
               .collection("sentTo")
               .doc(this.store.state.currentUser);
-            hisMsgref.get().then((doc) => {
-              hismsgs = doc.data().msgs.map((e) => {
-                hismsgs.push({ ...e, me: false });
-                this.messages.push({ ...e, me: false });
-              });
-
-              this.messages.sort((a, b) => {
-                return a.id - b.id;
+            hisMsgref.onSnapshot((doc) => {
+              this.messages = [];
+              hism = [];
+              doc.data().msgs.map((e) => {
+                // msgs.push({ ...e, me: false });
+                hism.push({ ...e, me: false });
+                this.messages = hism.concat(mym);
+                this.messages.sort((a, b) => {
+                  return a.id - b.id;
+                });
+                // this.messages.push({ ...e, me: false });
+                // this.messages = msgs;
               });
             });
+            // this.messages = msgs;
           });
       }
     },
     async newMsg() {
       if (this.msg != "") {
+        // this.messages.push({ msg: this.msg, time: time, id: id, me: true });
         const msg = this.msg;
         this.msg = "";
         const today = new Date();
@@ -199,7 +228,6 @@ export default {
     },
   },
   beforeMount() {
-    console.log(this.store.state.currentUser);
     const db = firebase.firestore();
     const usersRef = db.collection("users");
     if (this.store.state.logged == false) {
