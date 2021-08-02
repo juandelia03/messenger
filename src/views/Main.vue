@@ -339,6 +339,24 @@ export default {
   width: 450px;
   border-right: solid lightgray 1px;
 }
+@media (max-width: 1500px) {
+  .side {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    width: 300px;
+    border-right: solid lightgray 1px;
+  }
+}
+@media (max-width: 800px) {
+  .side {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    width: 200px;
+    border-right: solid lightgray 1px;
+  }
+}
 .section-1 {
   display: flex;
   align-items: center;

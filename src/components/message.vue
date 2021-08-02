@@ -73,5 +73,6 @@ export default {
   margin-right: 15px;
   font-size: 12px;
   color: gray;
+  word-break: keep-all;
 }
 </style>
